@@ -2,7 +2,9 @@
 
 ## TODO - for v1
 
-- [ ] apply game of life rules to each cell and animate
+- [X] animate
+- [ ] fix animation clock to use wall clock and not CPU clock (which doesn't work well at all)
+- [ ] apply game of life rules each frame
 - [ ] spacebar pauses/unpauses game
 - [ ] when paused, you can edit the board by moving cursor around and toggling cells
 - [ ] when screen shrinks, maintain offscreen board but don't try to render

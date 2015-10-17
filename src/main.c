@@ -14,6 +14,7 @@ typedef struct Board
 void handle_input(Board *world);
 void animate(Board *world);
 void initialize_world(Board *world);
+void apply_game_rules(Board *world);
 
 // board-specific functions
 void board_initialize_grid(Board *board, int width, int height);
@@ -42,6 +43,7 @@ main ()
     while (global_running)
     {
         handle_input(world);
+        apply_game_rules(world);
         animate(world);
     }
 
@@ -96,17 +98,22 @@ animate (Board *world)
 {
     int x, y;
     char ch;
+    static clock_t last_frame_ms = 0;
+    clock_t cur_ms;
+
+    cur_ms = clock() / (CLOCKS_PER_SEC / 1000.0f);
+    if ((cur_ms - last_frame_ms) <= 500.0)
+        // only do the redraw every second
+        return;
 
     for (x = 0; x < world->width; x++)
         for (y = 0; y < world->height; y++)
         {
-            if (board_is_alive_at(world, x, y))
-                ch = '#';
-            else
-                ch = ' ';
+            ch = board_is_alive_at(world, x, y)? '#' : ' ';
             mvaddch(y, x, ch);
         }
     refresh();
+    last_frame_ms = cur_ms;
 }
 
 
@@ -147,3 +154,12 @@ board_set_dead_at (Board *board, int x, int y)
     board->grid[y][x] = 0;
 }
 
+
+void
+apply_game_rules (Board *board)
+{
+    int x, y;
+    for (y = 0; y < board->height; y++)
+        for (x = 0; x < board->width; x++)
+            board->grid[y][x] = !board->grid[y][x];
+}
