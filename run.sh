@@ -4,5 +4,5 @@
 set -e
 
 touch bin/life && rm bin/life
-gcc -lncurses -o bin/life src/*
+gcc -g -lncurses -o bin/life src/*
 bin/life

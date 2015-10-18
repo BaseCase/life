@@ -1,7 +1,11 @@
 #include <curses.h>
 #include <stdlib.h>
 #include <time.h>
+#include <sys/time.h>
+#include <stdint.h>
 
+typedef uint32_t uint32;
+typedef uint64_t uint64;
 
 typedef struct Board
 {
@@ -98,12 +102,18 @@ animate (Board *world)
 {
     int x, y;
     char ch;
-    static clock_t last_frame_ms = 0;
-    clock_t cur_ms;
+    uint64 last_frame_ms, cur_time_ms;
+    static struct timeval last_frame_time = {};
+    struct timeval cur_time;
 
-    cur_ms = clock() / (CLOCKS_PER_SEC / 1000.0f);
-    if ((cur_ms - last_frame_ms) <= 500.0)
-        // only do the redraw every second
+    if (last_frame_time.tv_sec == 0)
+        gettimeofday(&last_frame_time, NULL);
+
+    gettimeofday(&cur_time, NULL);
+
+    last_frame_ms = last_frame_time.tv_sec * 1000 + last_frame_time.tv_usec / 1000;
+    cur_time_ms = cur_time.tv_sec * 1000 + cur_time.tv_usec / 1000;
+    if (cur_time_ms - last_frame_ms <= 500)
         return;
 
     for (x = 0; x < world->width; x++)
@@ -113,7 +123,8 @@ animate (Board *world)
             mvaddch(y, x, ch);
         }
     refresh();
-    last_frame_ms = cur_ms;
+
+    last_frame_time = cur_time;
 }
 
 
@@ -163,3 +174,4 @@ apply_game_rules (Board *board)
         for (x = 0; x < board->width; x++)
             board->grid[y][x] = !board->grid[y][x];
 }
+
