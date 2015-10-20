@@ -3,9 +3,12 @@
 #include <time.h>
 #include <sys/time.h>
 #include <stdint.h>
+#include <unistd.h>
+
 
 typedef uint32_t uint32;
 typedef uint64_t uint64;
+
 
 typedef struct Board
 {
@@ -16,9 +19,10 @@ typedef struct Board
 
 
 void handle_input(Board *world);
-void animate(Board *world);
+void draw(Board *world);
 void initialize_world(Board *world);
 void apply_game_rules(Board *world);
+void sleep_until_frame_target(struct timeval start, struct timeval current);
 
 // board-specific functions
 void board_initialize_grid(Board *board, int width, int height);
@@ -33,12 +37,16 @@ int global_running;
 int
 main ()
 {
+    static struct timeval frame_start_time;
+    struct timeval cur_time;
+
     Board *world;
 
     initscr();
     noecho();
     nodelay(stdscr, TRUE);
     srand((unsigned) time(NULL));
+    gettimeofday(&frame_start_time, NULL);
 
     world = (Board*) malloc(sizeof(Board));
     initialize_world(world);
@@ -48,11 +56,35 @@ main ()
     {
         handle_input(world);
         apply_game_rules(world);
-        animate(world);
+        draw(world); // draw to a buffer but don't put it on the screen yet
+
+        //sleep until it's time to draw buffer to screen
+        gettimeofday(&cur_time, NULL);
+        sleep_until_frame_target(frame_start_time, cur_time);
+        refresh(); // actually put the buffer on the screen
+
+        gettimeofday(&frame_start_time, NULL);
     }
 
     endwin();
     return 0;
+}
+
+
+void
+sleep_until_frame_target (struct timeval start, struct timeval current)
+{
+    int ms_per_frame = 50;
+
+    uint64 ms_start = (uint64)start.tv_sec * (uint64)1000 + (uint64)start.tv_usec / (uint64)1000;
+    uint64 ms_current = (uint64)current.tv_sec * (uint64)1000 + (uint64)current.tv_usec / (uint64)1000;
+
+    uint64 diff = ms_current - ms_start;
+    if (diff < ms_per_frame)
+    {
+        int sleep_time = (ms_per_frame - diff) * 1000;
+        usleep(sleep_time);
+    }
 }
 
 
@@ -98,33 +130,16 @@ handle_input (Board *world)
 
 
 void
-animate (Board *world)
+draw (Board *world)
 {
     int x, y;
     char ch;
-    uint64 last_frame_ms, cur_time_ms;
-    static struct timeval last_frame_time = {};
-    struct timeval cur_time;
-
-    if (last_frame_time.tv_sec == 0)
-        gettimeofday(&last_frame_time, NULL);
-
-    gettimeofday(&cur_time, NULL);
-
-    last_frame_ms = last_frame_time.tv_sec * 1000 + last_frame_time.tv_usec / 1000;
-    cur_time_ms = cur_time.tv_sec * 1000 + cur_time.tv_usec / 1000;
-    if (cur_time_ms - last_frame_ms <= 500)
-        return;
-
-    for (x = 0; x < world->width; x++)
-        for (y = 0; y < world->height; y++)
+    for (x=0; x < world->width; x++)
+        for (y=0; y < world->height; y++)
         {
             ch = board_is_alive_at(world, x, y)? '#' : ' ';
             mvaddch(y, x, ch);
         }
-    refresh();
-
-    last_frame_time = cur_time;
 }
 
 
@@ -170,8 +185,22 @@ void
 apply_game_rules (Board *board)
 {
     int x, y;
-    for (y = 0; y < board->height; y++)
-        for (x = 0; x < board->width; x++)
-            board->grid[y][x] = !board->grid[y][x];
-}
+    int tick_ms = 500;
+    uint64 cur_ms, last_tick_ms;
+    struct timeval cur_time;
+    static struct timeval last_tick_time = {};
+    if (last_tick_time.tv_sec == 0)
+        gettimeofday(&last_tick_time, NULL);
 
+    gettimeofday(&cur_time, NULL);
+    last_tick_ms = (uint64)last_tick_time.tv_sec * (uint64)1000 + (uint64)last_tick_time.tv_usec / (uint64)1000;
+    cur_ms = (uint64)cur_time.tv_sec * (uint64)1000 + (uint64)cur_time.tv_usec / (uint64)1000;
+
+    if (cur_ms - last_tick_ms >= tick_ms)
+    {
+        for (y = 0; y < board->height; y++)
+            for (x = 0; x < board->width; x++)
+                board->grid[y][x] = !board->grid[y][x];
+        last_tick_time = cur_time;
+    }
+}

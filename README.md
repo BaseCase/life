@@ -2,8 +2,6 @@
 
 ## TODO - for v1
 
-- [X] animate
-- [ ] fix animation clock to use wall clock and not CPU clock (which doesn't work well at all)
 - [ ] apply game of life rules each frame
 - [ ] spacebar pauses/unpauses game
 - [ ] when paused, you can edit the board by moving cursor around and toggling cells
@@ -14,8 +12,12 @@
 - [ ] create homebrew formula
 - [ ] submit to homebrew/games
 - [ ] refactor: move board struct and functions into separate file/header
-- [X] match playing area to window size
-- [X] randomly generate starting board on launch (maybe each cell has a 5% chance of being alive? something like that?)
+- [ ] refactor: storing too many timeval structs...could probably pass some around as params and only snap them once
+- [ ] refactor: too many casts...actually understand what you're doing and you won't need so many `(uint64)`s all over
+- [x] animate
+- [x] fix animation clock to use wall clock and not CPU clock (which doesn't work well at all)
+- [x] match playing area to window size
+- [x] randomly generate starting board on launch (maybe each cell has a 5% chance of being alive? something like that?)
 
 
 ## TODO - for later on
