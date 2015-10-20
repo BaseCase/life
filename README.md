@@ -2,7 +2,7 @@
 
 ## TODO - for v1
 
-- [ ] apply game of life rules each frame
+- [x] apply game of life rules each frame
 - [ ] spacebar pauses/unpauses game
 - [ ] when paused, you can edit the board by moving cursor around and toggling cells
 - [ ] when screen shrinks, maintain offscreen board but don't try to render
@@ -14,6 +14,7 @@
 - [ ] refactor: move board struct and functions into separate file/header
 - [ ] refactor: storing too many timeval structs...could probably pass some around as params and only snap them once
 - [ ] refactor: too many casts...actually understand what you're doing and you won't need so many `(uint64)`s all over
+- [ ] refactor: clean up neighbor counting...lots of duplicate checks right now
 - [x] animate
 - [x] fix animation clock to use wall clock and not CPU clock (which doesn't work well at all)
 - [x] match playing area to window size
