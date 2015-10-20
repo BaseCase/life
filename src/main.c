@@ -103,7 +103,7 @@ initialize_world (Board *world)
 
     for (int x = 0; x < screen_width; x++)
         for (int y = 0; y < screen_height; y++)
-            if ((rand() % 100) < 5)
+            if ((rand() % 100) < 10)
                 board_set_alive_at(world, x, y);
 }
 
@@ -186,7 +186,10 @@ apply_game_rules (Board *board)
     uint64 cur_ms, last_tick_ms;
     struct timeval cur_time;
     static struct timeval last_tick_time = {};
-    char **buffer_grid;
+    static char **buffer_grid = NULL;
+
+    if (buffer_grid == NULL)
+        buffer_grid = create_grid(board->width, board->height);
 
     if (last_tick_time.tv_sec == 0)
         gettimeofday(&last_tick_time, NULL);
@@ -197,8 +200,6 @@ apply_game_rules (Board *board)
 
     if (cur_ms - last_tick_ms >= tick_ms)
     {
-        buffer_grid = create_grid(board->width, board->height);
-
         for (y = 0; y < board->height; y++)
             for (x = 0; x < board->width; x++)
             {
@@ -220,13 +221,13 @@ apply_game_rules (Board *board)
                     case 6:
                     case 7:
                     case 8:
+                    default:
                         alive = 0;
                         break;
                 }
                 buffer_grid[y][x] = alive;
             }
         memcpy(board->grid, buffer_grid, (sizeof(char) * board->width * board->height));
-        free(buffer_grid);
         last_tick_time = cur_time;
     }
 }
