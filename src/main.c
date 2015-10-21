@@ -33,6 +33,7 @@ int board_count_living_neighbors_at_position(Board *board, int x, int y);
 
 
 int global_running;
+int global_paused;
 
 
 int
@@ -53,10 +54,13 @@ main ()
     initialize_world(world);
 
     global_running = 1;
+    global_paused = 0;
     while (global_running)
     {
         handle_input(world);
-        apply_game_rules(world);
+        if (!global_paused)
+            apply_game_rules(world);
+
         draw(world); // draw to a buffer but don't put it on the screen yet
 
         //sleep until it's time to draw buffer to screen
@@ -131,6 +135,10 @@ handle_input (Board *world)
     {
         case 'q':
             global_running = 0;
+            break;
+
+        case ' ':
+            global_paused = !global_paused;
             break;
     }
 }
