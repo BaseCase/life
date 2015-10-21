@@ -4,6 +4,7 @@
 #include <sys/time.h>
 #include <stdint.h>
 #include <unistd.h>
+#include <assert.h>
 
 
 typedef uint32_t uint32;
@@ -23,6 +24,7 @@ void draw(Board *world);
 void initialize_world(Board *world);
 void apply_game_rules(Board *world);
 void sleep_until_frame_target(struct timeval start, struct timeval current);
+void move_cursor_relative(int x, int y);
 
 // board-specific functions
 char* create_grid(int width, int height);
@@ -30,6 +32,7 @@ int board_is_alive_at(Board *board, int x, int y);
 void board_set_alive_at(Board *board, int x, int y);
 void board_set_dead_at(Board *board, int x, int y);
 int board_count_living_neighbors_at_position(Board *board, int x, int y);
+void board_toggle_cell_at_cursor(Board *board);
 
 
 int global_running;
@@ -47,6 +50,7 @@ main ()
     initscr();
     noecho();
     nodelay(stdscr, TRUE);
+    keypad(stdscr, TRUE);
     srand((unsigned) time(NULL));
     gettimeofday(&frame_start_time, NULL);
 
@@ -79,12 +83,13 @@ main ()
 void
 sleep_until_frame_target (struct timeval start, struct timeval current)
 {
-    int ms_per_frame = 50;
+    int ms_per_frame = 33;
 
     uint64 ms_start = (uint64)start.tv_sec * (uint64)1000 + (uint64)start.tv_usec / (uint64)1000;
     uint64 ms_current = (uint64)current.tv_sec * (uint64)1000 + (uint64)current.tv_usec / (uint64)1000;
 
     uint64 diff = ms_current - ms_start;
+    assert(diff <= ms_per_frame); // for testing...make sure we're always hitting our frame target
     if (diff < ms_per_frame)
     {
         int sleep_time = (ms_per_frame - diff) * 1000;
@@ -128,7 +133,7 @@ initialize_world (Board *world)
 void
 handle_input (Board *world)
 {
-    char input;
+    int input;
 
     input = getch();
     switch (input)
@@ -137,8 +142,28 @@ handle_input (Board *world)
             global_running = 0;
             break;
 
-        case ' ':
+        case 'p':
             global_paused = !global_paused;
+            break;
+
+        case ' ':
+            board_toggle_cell_at_cursor(world);
+            break;
+
+        case KEY_UP:
+            move_cursor_relative(0, -1);
+            break;
+
+        case KEY_DOWN:
+            move_cursor_relative(0, +1);
+            break;
+
+        case KEY_LEFT:
+            move_cursor_relative(-1, 0);
+            break;
+
+        case KEY_RIGHT:
+            move_cursor_relative(+1, 0);
             break;
     }
 }
@@ -147,14 +172,18 @@ handle_input (Board *world)
 void
 draw (Board *world)
 {
-    int x, y;
+    int x, y, init_x, init_y;
     char ch;
+
+    getyx(stdscr, init_y, init_x);
+
     for (x=0; x < world->width; x++)
         for (y=0; y < world->height; y++)
         {
             ch = board_is_alive_at(world, x, y)? '#' : ' ';
             mvaddch(y, x, ch);
         }
+    move(init_y, init_x);
 }
 
 
@@ -313,4 +342,27 @@ board_count_living_neighbors_at_position (Board *board, int x, int y)
         ++count;
 
     return count;
+}
+
+
+void
+move_cursor_relative (int x, int y)
+{
+    int cur_x, cur_y;
+    getyx(stdscr, cur_y, cur_x);
+    move(cur_y + y, cur_x + x);
+}
+
+
+void
+board_toggle_cell_at_cursor (Board *board)
+{
+    int x, y;
+    char alive;
+    getyx(stdscr, y, x);
+    alive = board_is_alive_at(board, x, y);
+    if (alive)
+        board_set_dead_at(board, x, y);
+    else
+        board_set_alive_at(board, x, y);
 }

@@ -2,7 +2,6 @@
 
 ## TODO - for v1
 
-- [ ] when paused, you can edit the board by moving cursor around and toggling cells
 - [ ] when screen shrinks, maintain offscreen board but don't try to render
 - [ ] when screen grows, increase board size to match
 - [ ] unit tests (figure out how to do this in C)
@@ -13,6 +12,7 @@
 - [ ] refactor: storing too many timeval structs...could probably pass some around as params and only snap them once
 - [ ] refactor: too many casts...actually understand what you're doing and you won't need so many `(uint64)`s all over
 - [ ] refactor: clean up neighbor counting...lots of duplicate checks right now
+- [x] when paused, you can edit the board by moving cursor around and toggling cells
 - [x] spacebar pauses/unpauses game
 - [x] BUGFIX: something is not right...the forms being created don't look correct...
 - [x] apply game of life rules each frame
