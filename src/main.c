@@ -4,7 +4,6 @@
 #include <sys/time.h>
 #include <stdint.h>
 #include <unistd.h>
-#include <string.h>
 
 
 typedef uint32_t uint32;
@@ -105,6 +104,20 @@ initialize_world (Board *world)
         for (int y = 0; y < screen_height; y++)
             if ((rand() % 100) < 10)
                 board_set_alive_at(world, x, y);
+#if 0
+    // set up 2 gliders for testing purposes...leave commented out normally
+    board_set_alive_at(world, 5, 5);
+    board_set_alive_at(world, 6, 6);
+    board_set_alive_at(world, 4, 7);
+    board_set_alive_at(world, 5, 7);
+    board_set_alive_at(world, 6, 7);
+
+    board_set_alive_at(world, 30, 30);
+    board_set_alive_at(world, 29, 29);
+    board_set_alive_at(world, 29, 28);
+    board_set_alive_at(world, 30, 28);
+    board_set_alive_at(world, 31, 28);
+#endif
 }
 
 
@@ -197,7 +210,6 @@ apply_game_rules (Board *board)
         buffer_board.grid = create_grid(buffer_board.width, buffer_board.height);
     }
 
-
     gettimeofday(&cur_time, NULL);
     last_tick_ms = (uint64)last_tick_time.tv_sec * (uint64)1000 + (uint64)last_tick_time.tv_usec / (uint64)1000;
     cur_ms = (uint64)cur_time.tv_sec * (uint64)1000 + (uint64)cur_time.tv_usec / (uint64)1000;
@@ -234,7 +246,10 @@ apply_game_rules (Board *board)
                 else
                     board_set_dead_at(&buffer_board, x, y);
             }
-        memcpy(board->grid, buffer_board.grid, (sizeof(char) * board->width * board->height));
+        char *tmp = board->grid;
+        board->grid = buffer_board.grid;
+        buffer_board.grid = tmp;
+
         last_tick_time = cur_time;
     }
 }
