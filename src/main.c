@@ -15,7 +15,7 @@ typedef struct Board
 {
     int width;
     int height;
-    char **grid;  // best to only access this via helper functions
+    char *grid;
 } Board;
 
 
@@ -26,7 +26,7 @@ void apply_game_rules(Board *world);
 void sleep_until_frame_target(struct timeval start, struct timeval current);
 
 // board-specific functions
-char** create_grid(int width, int height);
+char* create_grid(int width, int height);
 int board_is_alive_at(Board *board, int x, int y);
 void board_set_alive_at(Board *board, int x, int y);
 void board_set_dead_at(Board *board, int x, int y);
@@ -137,20 +137,16 @@ draw (Board *world)
 }
 
 
-char**
+char*
 create_grid (int width, int height)
 {
-    int x, y;
-    char **grid;
+    int i;
+    char *grid;
 
-    grid = (char **) malloc(sizeof(char *) * height);
+    grid = (char *) malloc(sizeof(char) * height * width);
 
-    for (y = 0; y < height; y++)
-    {
-        grid[y] = (char *) malloc(sizeof(char) * width);
-        for (x = 0; x < width; x++)
-            grid[y][x] = 0;
-    }
+    for (i=0; i < height * width; i++)
+        grid[i] = 0;
 
     return grid;
 }
@@ -159,21 +155,24 @@ create_grid (int width, int height)
 int
 board_is_alive_at (Board *board, int x, int y)
 {
-    return board->grid[y][x] == 1;
+    int pos = (y * board->width) + x;
+    return board->grid[pos] == 1;
 }
 
 
 void
 board_set_alive_at (Board *board, int x, int y)
 {
-    board->grid[y][x] = 1;
+    int pos = (y * board->width) + x;
+    board->grid[pos] = 1;
 }
 
 
 void
 board_set_dead_at (Board *board, int x, int y)
 {
-    board->grid[y][x] = 0;
+    int pos = (y * board->width) + x;
+    board->grid[pos] = 0;
 }
 
 
@@ -186,13 +185,18 @@ apply_game_rules (Board *board)
     uint64 cur_ms, last_tick_ms;
     struct timeval cur_time;
     static struct timeval last_tick_time = {};
-    static char **buffer_grid = NULL;
-
-    if (buffer_grid == NULL)
-        buffer_grid = create_grid(board->width, board->height);
+    static Board buffer_board = {};
 
     if (last_tick_time.tv_sec == 0)
         gettimeofday(&last_tick_time, NULL);
+
+    if (buffer_board.width == 0)
+    {
+        buffer_board.width = board->width;
+        buffer_board.height = board->height;
+        buffer_board.grid = create_grid(buffer_board.width, buffer_board.height);
+    }
+
 
     gettimeofday(&cur_time, NULL);
     last_tick_ms = (uint64)last_tick_time.tv_sec * (uint64)1000 + (uint64)last_tick_time.tv_usec / (uint64)1000;
@@ -207,7 +211,7 @@ apply_game_rules (Board *board)
                 switch (neighbor_count)
                 {
                     case 2:
-                        alive = board->grid[y][x];
+                        alive = board_is_alive_at(board, x, y);
                         break;
 
                     case 3:
@@ -225,9 +229,12 @@ apply_game_rules (Board *board)
                         alive = 0;
                         break;
                 }
-                buffer_grid[y][x] = alive;
+                if (alive)
+                    board_set_alive_at(&buffer_board, x, y);
+                else
+                    board_set_dead_at(&buffer_board, x, y);
             }
-        memcpy(board->grid, buffer_grid, (sizeof(char) * board->width * board->height));
+        memcpy(board->grid, buffer_board.grid, (sizeof(char) * board->width * board->height));
         last_tick_time = cur_time;
     }
 }
@@ -241,45 +248,45 @@ board_count_living_neighbors_at_position (Board *board, int x, int y)
     // upper left
     if ((x > 0) &&
         (y > 0) &&
-        board->grid[y-1][x-1])
+        board_is_alive_at(board, x-1, y-1))
         ++count;
 
     // above
     if ((y > 0) &&
-        board->grid[y-1][x])
+        board_is_alive_at(board, x, y-1))
         ++count;
 
     // upper right
     if ((y > 0) &&
         (x < board->width-1) &&
-        board->grid[y-1][x+1])
+        board_is_alive_at(board, x+1, y-1))
         ++count;
 
     // left
     if ((x > 0) &&
-        board->grid[y][x-1])
+        board_is_alive_at(board, x-1, y))
         ++count;
 
     // right
     if ((x < board->width-1) &&
-        board->grid[y][x+1])
+        board_is_alive_at(board, x+1, y))
         ++count;
 
     // lower left
     if ((x > 0) &&
         (y < board->height-1) &&
-        board->grid[y+1][x-1])
+        board_is_alive_at(board, x-1, y+1))
         ++count;
 
     // below
     if ((y < board->height-1) &&
-        board->grid[y+1][x])
+        board_is_alive_at(board, x, y+1))
         ++count;
 
     // lower right
     if ((y < board->height-1) &&
         (x < board->width-1) &&
-        board->grid[y+1][x+1])
+        board_is_alive_at(board, x+1, y+1))
         ++count;
 
     return count;
