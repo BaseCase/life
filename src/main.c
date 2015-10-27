@@ -19,10 +19,13 @@ void initialize_world(Board *world);
 void apply_game_rules(Board *world);
 void sleep_until_frame_target(struct timeval start, struct timeval current);
 void move_cursor_relative(int x, int y);
+void toggle_navigate_mode();
+void scroll_viewport_relative(int x, int y);
 
 
 int global_running;
 int global_paused;
+int global_scrolling_mode;
 
 
 int
@@ -45,6 +48,7 @@ main ()
 
     global_running = 1;
     global_paused = 0;
+    global_scrolling_mode = 1;
     while (global_running)
     {
         handle_input(world);
@@ -136,20 +140,68 @@ handle_input (Board *world)
             board_toggle_cell_at_cursor(world);
             break;
 
+        case 'n':
+            toggle_navigate_mode();
+            break;
+
         case KEY_UP:
-            move_cursor_relative(0, -1);
+        case 'k':
+            if (global_scrolling_mode)
+                scroll_viewport_relative(0, -1);
+            else
+                move_cursor_relative(0, -1);
+            break;
+
+        case 'K':
+            if (global_scrolling_mode)
+                scroll_viewport_relative(0, -10);
+            else
+                move_cursor_relative(0, -10);
             break;
 
         case KEY_DOWN:
-            move_cursor_relative(0, +1);
+        case 'j':
+            if (global_scrolling_mode)
+                scroll_viewport_relative(0, +1);
+            else
+                move_cursor_relative(0, +1);
+            break;
+
+        case 'J':
+            if (global_scrolling_mode)
+                scroll_viewport_relative(0, +10);
+            else
+                move_cursor_relative(0, +10);
             break;
 
         case KEY_LEFT:
-            move_cursor_relative(-1, 0);
+        case 'h':
+            if (global_scrolling_mode)
+                scroll_viewport_relative(-1, 0);
+            else
+                move_cursor_relative(-1, 0);
+            break;
+
+        case 'H':
+            if (global_scrolling_mode)
+                scroll_viewport_relative(-10, 0);
+            else
+                move_cursor_relative(-10, 0);
             break;
 
         case KEY_RIGHT:
-            move_cursor_relative(+1, 0);
+        case 'l':
+            if (global_scrolling_mode)
+                scroll_viewport_relative(+1, 0);
+            else
+                move_cursor_relative(+1, 0);
+            break;
+
+        case 'L':
+            if (global_scrolling_mode)
+                scroll_viewport_relative(+10, 0);
+            else
+                move_cursor_relative(+10, 0);
             break;
     }
 }
@@ -158,10 +210,11 @@ handle_input (Board *world)
 void
 draw (Board *world)
 {
-    int x, y, init_x, init_y;
+    int x, y, init_x, init_y, max_x, max_y;
     char ch;
 
     getyx(stdscr, init_y, init_x);
+    getmaxyx(stdscr, max_y, max_x);
 
     for (x=0; x < world->width; x++)
         for (y=0; y < world->height; y++)
@@ -169,7 +222,20 @@ draw (Board *world)
             ch = board_is_alive_at(world, x, y)? '#' : ' ';
             mvaddch(y, x, ch);
         }
-    move(init_y, init_x);
+
+
+    if (global_scrolling_mode)
+    {
+        move(3, 4);
+        hline('-', max_x-8);
+        move(max_y-4, 4);
+        hline('-', max_x-8);
+        move(3, 5);
+        vline('|', max_y-6);
+        move(3, max_x-6);
+        vline('|', max_y-6);
+        move(init_y, init_x);
+    }
 }
 
 
@@ -248,3 +314,16 @@ move_cursor_relative (int x, int y)
 }
 
 
+void
+toggle_navigate_mode ()
+{
+    global_scrolling_mode = !global_scrolling_mode;
+}
+
+
+void scroll_viewport_relative (int x, int y)
+{
+    // not 100% how I want to do this yet...gotta think about it.
+    // the idea is that the box will move around and only display part of the full universe.
+    // this feature necessitates some rendering code rework.
+}

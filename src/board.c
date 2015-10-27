@@ -1,5 +1,5 @@
 #include <curses.h>
-
+#include <stdlib.h>
 #include "board.h"
 
 char*
