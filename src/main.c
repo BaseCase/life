@@ -48,7 +48,7 @@ main ()
 
     global_running = 1;
     global_paused = 0;
-    global_scrolling_mode = 1;
+    global_scrolling_mode = 0;
     while (global_running)
     {
         handle_input(world);
@@ -234,8 +234,9 @@ draw (Board *world)
         vline('|', max_y-6);
         move(3, max_x-6);
         vline('|', max_y-6);
-        move(init_y, init_x);
     }
+
+    move(init_y, init_x);
 }
 
 
