@@ -14,7 +14,7 @@ typedef uint64_t uint64;
 
 
 void handle_input(Board *world);
-void draw(Board *world);
+void draw(Board *world, int x_offset, int y_offset);
 void initialize_world(Board *world);
 void apply_game_rules(Board *world);
 void sleep_until_frame_target(struct timeval start, struct timeval current);
@@ -26,6 +26,8 @@ void scroll_viewport_relative(int x, int y);
 int global_running;
 int global_paused;
 int global_scrolling_mode;
+int global_x_offset; //ewwwwww
+int global_y_offset; //ewwwwww
 
 
 int
@@ -49,13 +51,16 @@ main ()
     global_running = 1;
     global_paused = 0;
     global_scrolling_mode = 0;
+    global_x_offset = 0;
+    global_y_offset = 0;
+
     while (global_running)
     {
         handle_input(world);
         if (!global_paused)
             apply_game_rules(world);
 
-        draw(world); // draw to a buffer but don't put it on the screen yet
+        draw(world, global_x_offset, global_y_offset); // draw to a buffer but don't put it on the screen yet
 
         //sleep until it's time to draw buffer to screen
         gettimeofday(&cur_time, NULL);
@@ -208,7 +213,7 @@ handle_input (Board *world)
 
 
 void
-draw (Board *world)
+draw (Board *world, int x_offset, int y_offset)
 {
     int x, y, init_x, init_y, max_x, max_y;
     char ch;
@@ -216,10 +221,14 @@ draw (Board *world)
     getyx(stdscr, init_y, init_x);
     getmaxyx(stdscr, max_y, max_x);
 
-    for (x=0; x < world->width; x++)
-        for (y=0; y < world->height; y++)
+    // It should never be the case that the screen is bigger than the world
+    assert(world->width >= max_x
+           && world->height >= max_y);
+
+    for (x=0; x < max_x; x++)
+        for (y=0; y < max_y; y++)
         {
-            ch = board_is_alive_at(world, x, y)? '#' : ' ';
+            ch = board_is_alive_at(world, x+x_offset, y+y_offset)? '#' : ' ';
             mvaddch(y, x, ch);
         }
 
@@ -324,7 +333,6 @@ toggle_navigate_mode ()
 
 void scroll_viewport_relative (int x, int y)
 {
-    // not 100% how I want to do this yet...gotta think about it.
-    // the idea is that the box will move around and only display part of the full universe.
-    // this feature necessitates some rendering code rework.
+    global_x_offset += x;
+    global_y_offset += y;
 }
