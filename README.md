@@ -12,6 +12,8 @@
 - [ ] refactor: storing too many timeval structs...could probably pass some around as params and only snap them once
 - [ ] refactor: too many casts...actually understand what you're doing and you won't need so many `(uint64)`s all over
 - [ ] refactor: clean up neighbor counting...lots of duplicate checks right now
+- [ ] refactor: reduce imports...for example, don't need time.h AND sys/time.h
+- [ ] refactor: I think memset() from <string.h> is what you want for initializing malloc'd memory (not manual loop)
 - [x] when paused, you can edit the board by moving cursor around and toggling cells
 - [x] spacebar pauses/unpauses game
 - [x] BUGFIX: something is not right...the forms being created don't look correct...
